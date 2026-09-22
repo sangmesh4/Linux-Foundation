@@ -1,0 +1,355 @@
+<img width="1536" height="1024" alt="3426cb09-28ee-4953-9a99-9cba3b254a3e" src="https://github.com/user-attachments/assets/0a20a50b-44ca-4986-ac5d-4c6a8699313e" />
+
+
+## 📚 Table of Contents
+
+11. 🔎 [Check eBPF with bpftool](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#11--check-ebpf-with-bpftool)
+12. 🧪 [Install bpftrace](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#12--install-bpftrace)
+13. 🎯 [Your First eBPF Program](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#13--your-first-ebpf-program)
+14. 🔥 [Monitor New Processes](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#14--monitor-new-processes)
+15. 🔍 [Monitor Process Execution with PID](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#15--monitor-process-execution-with-pid)
+16. 👤 [Display User ID](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#16--display-user-id)
+17. 📂 [Monitor File Opens](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#17--monitor-file-opens)
+18. 🌐 [Monitor Network Connections](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#18--monitor-network-connections)
+19. 📊 [Count System Calls](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#19--count-system-calls)
+20. 🧠 [Understanding ](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#20--understanding-comm--count)[`@[comm] = count()`](https://chatgpt.com/c/6ab22efe-51d4-83e8-96ad-9985a4bce765#20--understanding-comm--count)
+
+---
+
+  # 11. 🔎 Check eBPF with bpftool
+
+Check whether `bpftool` is installed:
+
+```bash
+sudo bpftool version
+
+```
+
+Example:
+
+```text
+bpftool v7.x
+
+```
+
+### 📋 List eBPF Programs
+
+```bash
+sudo bpftool prog list
+
+```
+
+### 🗺️ List eBPF Maps
+
+```bash
+sudo bpftool map list
+
+```
+
+> 💡 These commands become especially useful when troubleshooting eBPF-based systems.
+
+---
+
+# 12. 🧪 Install bpftrace
+
+For Ubuntu/Debian:
+
+```bash
+sudo apt update
+sudo apt install bpftrace
+
+```
+
+Verify:
+
+```bash
+bpftrace --version
+
+```
+
+Example:
+
+```text
+bpftrace v0.x
+
+```
+
+---
+
+# 13. 🎯 Your First eBPF Program
+
+Let's start with a very simple example.
+
+```bash
+sudo bpftrace -e 'BEGIN { printf("Hello eBPF!\n"); }'
+
+```
+
+Expected output:
+
+```text
+Hello eBPF!
+
+```
+
+Stop it with:
+
+```text
+Ctrl + C
+
+```
+
+🎉 **Congratulations! You have executed your first eBPF-based program.**
+
+---
+
+# 14. 🔥 Monitor New Processes
+
+Now let's perform a practical experiment.
+
+Run:
+
+```bash
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_execve { printf("%s\n", comm); }'
+
+```
+
+Open another terminal and run:
+
+```bash
+ls
+
+```
+
+Then:
+
+```bash
+date
+
+```
+
+Then:
+
+```bash
+ps
+
+```
+
+You may see:
+
+```text
+bash
+ls
+date
+ps
+
+```
+
+### 🔄 What Happened?
+
+```text
+You Execute Command
+        │
+        ▼
+Process Execution
+        │
+        ▼
+Kernel Tracepoint
+        │
+        ▼
+eBPF Program
+        │
+        ▼
+bpftrace
+        │
+        ▼
+Terminal Output
+
+```
+
+---
+
+# 15. 🔍 Monitor Process Execution with PID
+
+Run:
+
+```bash
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_execve { printf("PID=%d COMMAND=%s\n", pid, comm); }'
+
+```
+
+Example output:
+
+```text
+PID=4210 COMMAND=bash
+PID=4321 COMMAND=ls
+PID=4350 COMMAND=cat
+
+```
+
+Now we have:
+
+```text
+PID
++
+Process Name
+
+```
+
+---
+
+# 16. 👤 Display User ID
+
+We can also display the UID.
+
+```bash
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_execve { printf("UID=%d PID=%d COMMAND=%s\n", uid, pid, comm); }'
+
+```
+
+Example:
+
+```text
+UID=1000 PID=4210 COMMAND=bash
+
+```
+
+This helps identify:
+
+> **Which user started a process?**
+
+---
+
+# 17. 📂 Monitor File Opens
+
+Let's observe file activity.
+
+```bash
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat { printf("PID=%d COMM=%s\n", pid, comm); }'
+
+```
+
+Now execute:
+
+```bash
+cat /etc/hosts
+
+```
+
+You should see activity from:
+
+```text
+cat
+
+```
+
+### 🔄 Concept
+
+```text
+Application
+     ↓
+open()
+     ↓
+Linux Kernel
+     ↓
+Tracepoint
+     ↓
+eBPF
+     ↓
+Output
+
+```
+
+---
+
+# 18. 🌐 Monitor Network Connections
+
+You can trace TCP connection-related state changes.
+
+```bash
+sudo bpftrace -e 'tracepoint:sock:inet_sock_set_state { printf("PID=%d COMM=%s\n", pid, comm); }'
+
+```
+
+Then try:
+
+```bash
+curl https://example.com
+
+```
+
+You may see connection-related events.
+
+### 🔎 Useful Questions
+
+- Which process creates connections?
+- When are connections created?
+- Which applications communicate over the network?
+
+---
+
+# 19. 📊 Count System Calls
+
+Instead of printing every event, we can count events.
+
+```bash
+sudo bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }'
+
+```
+
+Allow it to run for a few seconds.
+
+Then:
+
+```text
+Ctrl + C
+
+```
+
+Example:
+
+```text
+@[
+    "bash"
+]: 120
+
+@[
+    "sshd"
+]: 80
+
+```
+
+This gives an approximate count of system calls generated by each process during the observation period.
+
+---
+
+# 20. 🧠 Understanding `@[comm] = count()`
+
+This syntax is important when learning bpftrace.
+
+```text
+@[comm] = count()
+
+```
+
+means:
+
+```text
+Group events by process name
+            ↓
+        Count events
+            ↓
+       Display results
+
+```
+
+Conceptually:
+
+```text
+bash  → 120 syscalls
+sshd  → 80 syscalls
+nginx → 50 syscalls
+
+```
+
+---
